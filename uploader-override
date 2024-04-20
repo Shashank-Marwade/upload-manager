@@ -1,0 +1,43 @@
+networks:
+  sdk_network:
+    external:
+      name: sdk_bridge_network
+  system_network:
+    external:
+      name: system_bridge_network
+
+services:
+  uploader:
+    build:
+      context: .
+    image: s3-uploader
+    environment:
+      TZ: "Asia/ Kolkata"
+      THREAD_COUNT: 10 #NO OF THREAD TO RUN
+      LOG_LEVEL: 2 #PYTHON LOG LAEVE 1-5 DEBUL-CRETICAL
+      UPLOAD_ENABLED: "" #Enable/null(Disable)
+      MIN_PROCESS_INTERVAL: 80 #sec
+      MEMORY_CHECK_INTERVAL: 300 #sec ~ 5 Min
+      PURGE_THRESHOLD_PERCENTAGE: 90 #percent
+      PURGE_INTERVAL: 7 #days
+      PURGE_RESUME_PERCENTAGE: 80 #percent
+      BUCKET_NAME: my-upload-manager-bucket
+      ARCHIVE_EXPIRE_DAYS: 30 # ARCHIVE PURGE AFTER DAYS
+    volumes:
+      - data.vol:/data
+      - system.vol:/system
+    logging:
+      driver: journald
+      options:
+        tag: upload-manager
+    networks:
+      - system_network
+      - sdk_network
+    restart: always
+    tty: true
+
+volumes:
+  data.vol:
+    external: true
+  system.vol:
+    external: true
