@@ -10,7 +10,7 @@ services:
   uploader:
     build:
       context: .
-    image: s3-uploader
+    image: upload-mgr
     environment:
       TZ: "Asia/ Kolkata"
       THREAD_COUNT: 10 #NO OF THREAD TO RUN
@@ -21,7 +21,7 @@ services:
       PURGE_THRESHOLD_PERCENTAGE: 90 #percent
       PURGE_INTERVAL: 7 #days
       PURGE_RESUME_PERCENTAGE: 80 #percent
-      BUCKET_NAME: my-upload-manager-bucket
+      BUCKET_NAME: my-upload-mgr-bucket
       ARCHIVE_EXPIRE_DAYS: 30 # ARCHIVE PURGE AFTER DAYS
     volumes:
       - data.vol:/data
@@ -29,7 +29,7 @@ services:
     logging:
       driver: journald
       options:
-        tag: upload-manager
+        tag: upload-mgr
     networks:
       - system_network
       - sdk_network
