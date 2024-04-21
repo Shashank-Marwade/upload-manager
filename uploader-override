@@ -25,7 +25,6 @@ services:
       ARCHIVE_EXPIRE_DAYS: 30 # ARCHIVE PURGE AFTER DAYS
     volumes:
       - data.vol:/data
-      - system.vol:/system
     logging:
       driver: journald
       options:
@@ -38,6 +37,4 @@ services:
 
 volumes:
   data.vol:
-    external: true
-  system.vol:
     external: true
