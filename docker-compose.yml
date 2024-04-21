@@ -1,7 +1,4 @@
 networks:
-  sdk_network:
-    external:
-      name: sdk_bridge_network
   system_network:
     external:
       name: system_bridge_network
@@ -24,17 +21,16 @@ services:
       BUCKET_NAME: my-upload-mgr-bucket
       ARCHIVE_EXPIRE_DAYS: 30 # ARCHIVE PURGE AFTER DAYS
     volumes:
-      - data.vol:/data
+      - /:/data
     logging:
       driver: journald
       options:
         tag: upload-mgr
     networks:
       - system_network
-      - sdk_network
     restart: always
     tty: true
 
 volumes:
-  data.vol:
+  /:
     external: true
