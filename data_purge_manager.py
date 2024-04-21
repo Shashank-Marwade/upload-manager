@@ -84,10 +84,5 @@ class DataPurger:
                     """purges data from data/out/video data/out/image data/out/text"""
                     logging.info("Triggering data purge.")
                     self.purge_all_folders()
-                if datetime.now() - self.last_check_time >= timedelta(days=1):
-                    """purges data from data/out/archive"""
-                    logging.info("Triggering archive purge.")
-                    self.purge_old_archived_files(Config.ARCHIVE_DIR)
-                    self.last_check_time = datetime.now()
         except Exception as e:
             logging.error(f"Error handling data purge: {e}")
