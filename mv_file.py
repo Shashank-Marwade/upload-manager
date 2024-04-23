@@ -27,7 +27,7 @@ class MoveFile:
         self.session_token = None
         self.prefix = None
         self.retry_count = 0
-        self.config_file_path = Config.AWSIOT_SHADOW_FILE
+        self.config_file_path = Config.SHADOW_FILE
         self.load_aws_credentials()
         self.s3 = boto3.client(
             "s3",
@@ -40,10 +40,9 @@ class MoveFile:
         with open(self.config_file_path, "r") as config_file:
             logging.info("Loading AWS credentials...")
             config_data = json.load(config_file)
-            self.access_key = config_data["state"]["desired"]["S3"]["AccessKey"]
-            self.secret_key = config_data["state"]["desired"]["S3"]["SecretKey"]
-            self.session_token = config_data["state"]["desired"]["S3"]["SessionToken"]
-            self.prefix = f'{config_data["state"]["delta"]["S3"]["Prefix"]}'
+            self.access_key = config_data["Credentials"]["AccessKeyId"]
+            self.secret_key = config_data["Credentials"]["SecretAccessKey"]
+            self.session_token = config_data["Credentials"]["SessionToken"]
 
     def update_aws_credentials(self, access_key, secret_key, session_token):
         logging.info("Updating AWS credentials...")
@@ -53,13 +52,8 @@ class MoveFile:
 
     def upload_file(self, src, dst):
         try:
-            dst = f"{self.prefix}/{dst}"
-            if "/texts/" in src or "/priority.texts/" in src:
-                bucket = Config.TXT_BUCKET_NAME
-            elif "/images/" in src or "/priority.images/" in src:
-                bucket = Config.IMG_BUCKET_NAME
-            elif "/videos/" in src:
-                bucket = Config.VIDEO_BUCKET_NAME
+            dst = f"my_backup"
+            bucket = Config.BUCKET_NAME
             logging.info(f"Uploading started for {src} to {dst}")
             self.s3.upload_file(src, bucket, dst)
             upload_date_time = datetime.now().isoformat()
@@ -68,8 +62,7 @@ class MoveFile:
             object_name = os.path.basename(src)
             mime_type = subprocess.getoutput(f"file --brief --mime-type {src}")
 
-            bucket_type = self.get_bucket_type(src)
-            activity_log(object_name, bucket_type, mime_type, file_date_time, upload_date_time)
+            activity_log(object_name, mime_type, file_date_time, upload_date_time)
             logging.info(f"Log file updated")
 
         except boto3.exceptions.S3UploadFailedError as error:
@@ -86,16 +79,6 @@ class MoveFile:
 
         except Exception as error:
             logging.exception(f"Error uploading file {src} to S3: {error}")
-
-    def get_bucket_type(self, src):
-        if "/texts/" in src or "/priority.texts/" in src:
-            return "texts"
-        elif "/images/" in src or "/priority.images/" in src:
-            return "images"
-        elif "/videos/" in src:
-            return "videos"
-        else:
-            return "unknown"
 
     def handle_exception(self, src, dst):
         expired_key_cache_file = "expired_key_cache.json"
@@ -124,7 +107,7 @@ def move_json(json_obj):
         logging.error(f"Failed to generate the content hash: {json_obj}", file=sys.stderr)
         return
 
-    log_file_tmp = os.path.join(Config.UPLOAD_MQTT_DIR, f"transferring.activity-{os.getpid()}")
+    log_file_tmp = os.path.join(Config.UPLOAD_ACTIVITY_LOGS, f"transferring.activity-{os.getpid()}")
     with open(log_file_tmp, "w") as tmp_file:
         json_obj["ContentHash"] = md5_hash
         json.dump(json_obj, tmp_file)
@@ -133,7 +116,7 @@ def move_json(json_obj):
         logging.error(f"Failed to generate the JSON log: {json_obj}", file=sys.stderr)
         return
 
-    log_file = os.path.join(Config.UPLOAD_MQTT_DIR,f"activity_{datetime.now().isoformat().replace(' ', '_')}_{md5_hash}.json",)
+    log_file = os.path.join(Config.UPLOAD_ACTIVITY_LOGS,f"activity_{datetime.now().isoformat().replace(' ', '_')}_{md5_hash}.json",)
     try:
         os.rename(log_file_tmp, log_file)
         logging.info(f"Activity log committed, to {log_file}")
@@ -176,12 +159,29 @@ def get_credentials():
         till device registration module not completed"""
         time.sleep(10)
 
+        # Command to generate credentials for 24 hrs
+        command = "aws sts get-session-token --duration 43200"
+
+        # Run the command and store credentials
+        try:
+            result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            # Convert the output to JSON
+            data = json.loads(result.stdout)
+            
+            # Write the data to config.json
+            with open(Config.SHADOW_FILE, "w") as f:
+                json.dump(data, f, indent=4)
+        except subprocess.CalledProcessError as e:
+            logging.exception(f"An error occurred while running the command: {e.stderr}")
+        except json.JSONDecodeError:
+            logging.exception("Failed to parse JSON from the command output.")
+
         # Read the updated AWS configuration file
-        with open(Config.AWSIOT_SHADOW_FILE, "r") as config_file:
+        with open(Config.SHADOW_FILE, "r") as config_file:
             config_data = json.load(config_file)
-            new_access_key = config_data["state"]["desired"]["S3"]["AccessKey"]
-            new_secret_key = config_data["state"]["desired"]["S3"]["SecretKey"]
-            new_session_token = config_data["state"]["desired"]["S3"]["SessionToken"]
+            new_access_key = config_data["Credentials"]["AccessKeyId"]
+            new_secret_key = config_data["Credentials"]["SecretAccessKey"]
+            new_session_token = config_data["Credentials"]["SessionToken"]
 
         return new_access_key, new_secret_key, new_session_token
     finally:

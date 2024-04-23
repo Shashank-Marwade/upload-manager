@@ -30,17 +30,17 @@ class ScriptConfig:
     DAIS_WHATSAPP_IMG_DIR = "/data/dais/whatsapp_images"
     print(f"DAIS_WHATSAPP_IMG_DIR: {DAIS_WHATSAPP_IMG_DIR}")
 
-    UPLOAD_MQTT_DIR = "/data/out/mqtt"
-    print(f"ENV_UPLOAD_MQTT_DIR: {UPLOAD_MQTT_DIR}")
+    UPLOAD_ACTIVITY_LOGS = "/data/logs"
+    print(f"UPLOAD_ACTIVITY_LOGS: {UPLOAD_ACTIVITY_LOGS}")
 
-    AWSIOT_SHADOW_FILE = "/system/aws_iot/config.json"
-    print(f"ENV_AWSIOT_SHADOW_FILE: {AWSIOT_SHADOW_FILE}")
+    SHADOW_FILE = "/data/config.json"
+    print(f"ENV_SHADOW_FILE: {SHADOW_FILE}")
 
     UPLOADER_TMP_DIR = "/tmp"
     print(f"UPLOADER_TMP_DIR: {UPLOADER_TMP_DIR}")
 
-    VIDEO_BUCKET_NAME = os.environ.get("VIDEO_BUCKET_NAME", "fti-video-bucket")
-    print(f"VIDEO_BUCKET_NAME: {VIDEO_BUCKET_NAME}")
+    BUCKET_NAME = os.environ.get("BUCKET_NAME", "my-upload-mgr-bucket")
+    print(f"BUCKET_NAME: {BUCKET_NAME}")
 
     MIN_PROCESS_INTERVAL = int(os.environ.get("MIN_PROCESS_INTERVAL", 60))  # Seconds ~1 Min
     print(f"MIN_PROCESS_INTERVAL: {MIN_PROCESS_INTERVAL}")

@@ -25,7 +25,7 @@ class EventHandler(pyinotify.ProcessEvent):
 
     def get_missed_files(self):
         # Check if there is any missed files
-        logging.info("Checking fro missed files...")
+        logging.info("Checking for missed files...")
         missed_files = []
         current_time = time.time()
 
