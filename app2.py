@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import threading
 import os
 import signal
@@ -89,11 +89,40 @@ def list_s3_objects():
 
         # Return list of object details (customize as needed)
         object_data = [{'Key': obj['Key'], 'LastModified': obj['LastModified']} for obj in all_objects]
+        logging.info(f"Found {len(object_data)} objects in S3 bucket")
+        logging.info(f"Object data: {object_data}")
         return jsonify(object_data)
 
     except Exception as e:
         # Catch general exceptions
         return jsonify({'error': str(e)}), 500
+
+@app.route('/download', methods=['GET'])
+def download_s3_object():
+    # Get the filename from the request query parameters
+    filename = request.args.get('filename')
+
+    if not filename:
+        logging.error("Filename not provided")
+        return 'Filename not provided', 400
+
+    try:
+        # Download the object from S3
+        s3_response = s3.get_object(Bucket=os.environ.get('BUCKET_NAME'), Key=filename)
+        object_data = s3_response['Body'].read()
+
+        logging.info(f"Downloaded {filename} from S3")
+        # Create a temporary file and write the object data to it
+        temp_file_path = f'/data/download/{filename}'
+        with open(temp_file_path, 'wb') as temp_file:
+            temp_file.write(object_data)
+        logging.info("File Downloaded")
+
+        # Send the file as a response
+        return send_file(temp_file_path, as_attachment=True)
+
+    except Exception as e:
+        return f'Error downloading file: {e}', 500
 
 def restart_monitoring():
     global data_purger, memory_thread, purge_thread, upload_threads, shutdown_event
