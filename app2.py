@@ -25,15 +25,19 @@ def graceful_shutdown(signum, frame):
 @app.route('/list_directories', methods=['GET'])
 def list_directories():
     path = request.args.get('path', '/data')
+    logging.info(f"Listing directories in {path}")
     if not os.path.exists(path):
         return jsonify({"error": "Path does not exist"}), 404
 
     try:
         directories = [dirs for dirs in os.listdir(path) if os.path.isdir(os.path.join(path, dirs))]
+        logging.info(f"Found directories: {directories}")
         return jsonify(directories)
     except PermissionError as e:
+        logging.error(f"Permission error: {str(e)}")
         return jsonify({"error": f"Permission error: {str(e)}"}), 403
     except Exception as e:
+        logging.error(f"Error listing directories: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/update_folders', methods=['POST'])
@@ -127,4 +131,4 @@ if __name__ == "__main__":
     else:
         logging.error("Failed to read credentials. Exiting.")
 
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=5000)
