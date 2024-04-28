@@ -52,16 +52,17 @@ class MoveFile:
 
     def upload_file(self, src, dst):
         try:
-            dst = f"my_backup"
+            object_name = os.path.basename(src)
+            dst = f"my_backup/{object_name}"
             bucket = Config.BUCKET_NAME
             logging.info(f"Uploading started for {src} to {dst}")
             self.s3.upload_file(src, bucket, dst)
             upload_date_time = datetime.now().isoformat()
             file_date_time = date.today().isoformat()
             logging.info(f"Uploaded file {src} to S3 object {dst}")
-            object_name = os.path.basename(src)
             mime_type = subprocess.getoutput(f"file --brief --mime-type {src}")
 
+            logging.info(f"Updating log file with details {object_name} {mime_type} {file_date_time} {upload_date_time}")
             activity_log(object_name, mime_type, file_date_time, upload_date_time)
             logging.info(f"Log file updated")
 
@@ -99,6 +100,16 @@ class MoveFile:
         self.upload_file(src, dst)
 
 
+def ensure_directory_exists(directory_path):
+    if not os.path.exists(directory_path):
+        try:
+            os.makedirs(directory_path)
+            logging.info(f"Directory created: {directory_path}")
+        except OSError as e:
+            logging.error(f"Failed to create directory {directory_path}: {e}")
+    else:
+        logging.info(f"Directory already exists: {directory_path}")
+
 def move_json(json_obj):
     json_str = json.dumps(json_obj)  # Convert dictionary to JSON-formatted string
     md5_hash = hashlib.md5(json_str.encode()).hexdigest()
@@ -106,7 +117,8 @@ def move_json(json_obj):
     if not md5_hash:
         logging.error(f"Failed to generate the content hash: {json_obj}", file=sys.stderr)
         return
-
+    
+    ensure_directory_exists(Config.UPLOAD_ACTIVITY_LOGS)
     log_file_tmp = os.path.join(Config.UPLOAD_ACTIVITY_LOGS, f"transferring.activity-{os.getpid()}")
     with open(log_file_tmp, "w") as tmp_file:
         json_obj["ContentHash"] = md5_hash
@@ -126,11 +138,10 @@ def move_json(json_obj):
         return
 
 
-def activity_log(object, bucket_type, mime_type, date_time, upload_date_time):
+def activity_log(object, mime_type, date_time, upload_date_time):
     json_obj = {
         "Kind": "Upload",
         "Object": object,
-        "BucketType": bucket_type,
         "MIME": mime_type,
         "DateTime": date_time,
         "UploadDateTime": upload_date_time
@@ -171,12 +182,14 @@ def get_credentials():
             # Write the data to config.json
             with open(Config.SHADOW_FILE, "w") as f:
                 json.dump(data, f, indent=4)
+            logging.info(f"Updated AWS credentials in config.json")
         except subprocess.CalledProcessError as e:
             logging.exception(f"An error occurred while running the command: {e.stderr}")
         except json.JSONDecodeError:
             logging.exception("Failed to parse JSON from the command output.")
 
         # Read the updated AWS configuration file
+        logging.info(f"Reading updated AWS credentials from config.json")
         with open(Config.SHADOW_FILE, "r") as config_file:
             config_data = json.load(config_file)
             new_access_key = config_data["Credentials"]["AccessKeyId"]
