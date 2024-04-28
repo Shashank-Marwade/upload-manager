@@ -2,4 +2,6 @@ boto3
 pyinotify==0.9.6
 psutil==5.9.8
 Flask==3.0.3
+pysqlite3==0.5.2
+sqlalchemy
 awscli

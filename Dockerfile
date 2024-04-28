@@ -7,6 +7,7 @@ WORKDIR /usr/src/app
 COPY requirements.txt /usr/src/app/
 
 # Install the app dependencies
+RUN apt-get install libsqlite3-dev
 RUN pip install -r requirements.txt
 
 # Install AWS CLI
