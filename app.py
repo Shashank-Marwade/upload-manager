@@ -22,10 +22,6 @@ purge_thread = None
 upload_threads = []
 shutdown_event = threading.Event()
 
-# def graceful_shutdown(signum, frame):
-#     shutdown_event.set()
-#     app.logger.info("Gracefully shutting down from SIGINT (Ctrl-C)")
-
 @app.route('/list_directories', methods=['GET'])
 def list_directories():
     path = request.args.get('path', '/data')
@@ -92,14 +88,14 @@ def list_s3_objects():
             if 'Contents' in page:
                 all_objects.extend(page['Contents'])
 
-        # Return list of object details (customize as needed)
+        # Return list of object details
         object_data = [{'Key': obj['Key'], 'LastModified': obj['LastModified']} for obj in all_objects]
         logging.info(f"Found {len(object_data)} objects in S3 bucket")
         logging.info(f"Object data: {object_data}")
         return jsonify(object_data)
 
     except Exception as e:
-        # Catch general exceptions
+        logging.exception("Error listing S3 objects: %s", e)
         return jsonify({'error': str(e)}), 500
 
 @app.route('/download', methods=['GET'])
@@ -112,7 +108,6 @@ def download_s3_object():
         return 'Filename not provided', 400
 
     try:
-        # Download the object from S3
         s3_response = s3.get_object(Bucket=os.environ.get('BUCKET_NAME'), Key=filename)
         object_data = s3_response['Body'].read()
 

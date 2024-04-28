@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 class AWSCred(Base):
-    __tablename__ = 'aws_secreats'
+    __tablename__ = 'aws_secretes'
     
     id = Column(Integer, primary_key=True)
     access_key = Column(String)

@@ -4,14 +4,9 @@ import threading
 import time
 import zipfile
 import pyinotify
-import signal
 
 from scripts_config import ScriptConfig as Config
 from mv_file import MoveFile
-from data_purge_manager import DataPurger
-
-# Configure the logging settings
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 mv_service = MoveFile()
 shutdown_event = threading.Event()

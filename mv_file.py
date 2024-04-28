@@ -160,16 +160,12 @@ def access_key_request_log(date_time):
 
 
 def get_credentials():
+    """Generating New Credentials"""
     # Acquire the lock to ensure exclusive access to the credentials
     credentials_lock.acquire()
     logging.info(f"Acquired the lock for the credentials")
 
     try:
-        """Simulate waiting for 5 seconds to fetch updated credentials because shadow file update on every 5 seconds so
-        credentials will be updated after every 5 seconds and this is temporary solution to fetch updated credentials
-        till device registration module not completed"""
-        time.sleep(10)
-
         # Command to generate credentials for 24 hrs
         command = "aws sts get-session-token --duration 43200"
 

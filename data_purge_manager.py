@@ -13,21 +13,6 @@ class DataPurger:
         self.memory_queue = Queue()
         self.last_check_time = datetime.now()
 
-    def purge_old_archived_files(self, directory, days=Config.ARCHIVE_PURGE_INTERVAL):
-        current_time = time.time()  # Get current time in seconds
-
-        # Calculate the threshold time (30 days ago)
-        threshold_time = current_time - (days * 24 * 60 * 60)
-
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                file_path = os.path.join(root, file)
-                file_mtime = os.path.getmtime(file_path)
-
-                if file_mtime < threshold_time:
-                    logging.info(f"Purging old archived file: {file_path}")
-                    os.remove(file_path)
-
     def purge_data(self, dir_path):
         try:
             logging.info(f"Purging data in {dir_path}")
@@ -81,13 +66,8 @@ class DataPurger:
         try:
             while True:
                 if self.memory_queue.get():
-                    """purges data from data/out/video data/out/image data/out/text"""
+                    """purges data from /data/"""
                     logging.info("Triggering data purge.")
                     self.purge_all_folders()
-                if datetime.now() - self.last_check_time >= timedelta(days=1):
-                    """purges data from data/out/archive"""
-                    logging.info("Triggering archive purge.")
-                    self.purge_old_archived_files(Config.ARCHIVE_DIR)
-                    self.last_check_time = datetime.now()
         except Exception as e:
             logging.error(f"Error handling data purge: {e}")

@@ -12,8 +12,6 @@ services:
       - 5000:5000
     environment:
       TZ: "Asia/ Kolkata"
-      THREAD_COUNT: 10 #NO OF THREAD TO RUN
-      LOG_LEVEL: 2 #PYTHON LOG LAEVE 1-5 DEBUL-CRETICAL
       UPLOAD_ENABLED: "Enable" #Enable/null(Disable)
       MIN_PROCESS_INTERVAL: 80 #sec
       MEMORY_CHECK_INTERVAL: 300 #sec ~ 5 Min
