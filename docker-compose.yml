@@ -8,20 +8,22 @@ services:
     build:
       context: .
     image: upload-mgr
+    ports:
+      - 5000:5000
     environment:
       TZ: "Asia/ Kolkata"
       THREAD_COUNT: 10 #NO OF THREAD TO RUN
       LOG_LEVEL: 2 #PYTHON LOG LAEVE 1-5 DEBUL-CRETICAL
-      UPLOAD_ENABLED: "" #Enable/null(Disable)
+      UPLOAD_ENABLED: "Enable" #Enable/null(Disable)
       MIN_PROCESS_INTERVAL: 80 #sec
       MEMORY_CHECK_INTERVAL: 300 #sec ~ 5 Min
       PURGE_THRESHOLD_PERCENTAGE: 90 #percent
       PURGE_INTERVAL: 7 #days
       PURGE_RESUME_PERCENTAGE: 80 #percent
-      BUCKET_NAME: my-upload-mgr-bucket
+      BUCKET_NAME: fti-test-txt-bucket #my-upload-mgr-bucket
       ARCHIVE_EXPIRE_DAYS: 30 # ARCHIVE PURGE AFTER DAYS
     volumes:
-      - /:/data
+      - ~/workstuff:/data
     logging:
       driver: journald
       options:
@@ -30,7 +32,3 @@ services:
       - system_network
     restart: always
     tty: true
-
-volumes:
-  /:
-    external: true
