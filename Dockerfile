@@ -13,10 +13,10 @@ RUN pip install -r requirements.txt
 RUN pip install awscli --upgrade --user
 
 # Copy AWS credentials file
-COPY ~/.aws/credentials /root/.aws/credentials
+COPY credentials /root/.aws/credentials
 
 # Copy the rest of the application code to the container
 COPY . /usr/src/app/
 
 # Set the command to run your app
-CMD ["python3", "uploader.py"]
+CMD ["python3", "app.py"]
