@@ -14,6 +14,7 @@ from data_purge_manager import DataPurger
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 mv_service = MoveFile()
+shutdown_event = threading.Event()
 
 
 class EventHandler(pyinotify.ProcessEvent):
@@ -150,62 +151,3 @@ def watch_folder_in_thread(folder_path, shutdown_event):
 def graceful_shutdown(_, __):
     logging.info("Received termination signal. Initiating graceful shutdown.")
     shutdown_event.set()
-
-
-if __name__ == "__main__":
-    folders_to_watch_for_upload = [
-        Config.OUT_TEXT_DIR,
-        Config.OUT_IMAGE_DIR,
-        Config.OUT_VIDEO_DIR,
-    ]
-
-    folders_to_watch_for_purge = [
-        Config.OUT_TEXT_DIR,
-        Config.OUT_IMAGE_DIR,
-        Config.OUT_VIDEO_DIR,
-        Config.DAIS_IMAGE_DIR,
-        Config.DAIS_VIDEO_DIR,
-        Config.DAIS_ARCHIVES_DIR,
-        Config.DAIS_WHATSAPP_IMG_DIR,
-    ]
-
-    # Create an instance of DataPurger (outside the if block)
-    data_purger = DataPurger(folders_to_watch_for_purge)
-
-    # Create memory_thread and purge_thread outside the if block
-    memory_thread = threading.Thread(target=data_purger.monitor_memory_usage, daemon=True)
-    purge_thread = threading.Thread(target=data_purger.handle_data_purge, daemon=True)
-
-    # Start memory_thread and purge_thread regardless of is_enabled
-    memory_thread.start()
-    purge_thread.start()
-
-    shutdown_event = threading.Event()  # Event to signal shutdown
-    threads = []
-
-    # Register signal handler for graceful shutdown
-    signal.signal(signal.SIGINT, graceful_shutdown)
-
-    is_enabled = bool(os.environ.get("UPLOAD_ENABLED", False))
-    logging.info(f"UPLOAD_ENABLED: {is_enabled}")
-
-    if is_enabled:
-        logging.info("Starting uploader service...")
-
-        # Watch folders in separate threads (within the if block)
-        for folder in folders_to_watch_for_upload:
-            thread = threading.Thread(target=watch_folder_in_thread, args=(folder, shutdown_event))
-            thread.start()
-            threads.append(thread)
-
-    try:
-        # Wait for uploader threads (if enabled) to complete (unchanged)
-        if is_enabled:
-            for thread in threads:
-                thread.join()
-        memory_thread.join()
-        purge_thread.join()
-    except KeyboardInterrupt:
-        logging.info("Main thread stopped by user.")
-    finally:
-        logging.info("All uploader threads (if enabled) have completed. Exiting.")
