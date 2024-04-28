@@ -5,7 +5,7 @@ import signal
 import logging
 import boto3
 from data_purge_manager import DataPurger
-from uploader import watch_folder_in_thread
+from uploader import graceful_shutdown, watch_folder_in_thread
 import configparser
 
 app = Flask(__name__)
@@ -18,9 +18,9 @@ purge_thread = None
 upload_threads = []
 shutdown_event = threading.Event()
 
-def graceful_shutdown(signum, frame):
-    shutdown_event.set()
-    app.logger.info("Gracefully shutting down from SIGINT (Ctrl-C)")
+# def graceful_shutdown(signum, frame):
+#     shutdown_event.set()
+#     app.logger.info("Gracefully shutting down from SIGINT (Ctrl-C)")
 
 @app.route('/list_directories', methods=['GET'])
 def list_directories():
@@ -47,6 +47,7 @@ def update_folders():
     upload_folders = data.get('upload_folders', [])
     purge_folders = data.get('purge_folders', [])
 
+    logging.info(f"Updated folders: upload={upload_folders}, purge={purge_folders}")
     # Restart all monitoring based on new folders
     restart_monitoring()
     return jsonify({"message": "Folders updated successfully"}), 200
@@ -137,12 +138,14 @@ def restart_monitoring():
 
     # Restart uploader threads if enabled
     is_enabled = bool(os.environ.get("UPLOAD_ENABLED", False))
+    logging.info(f"UPLOAD_ENABLED: {is_enabled}")
     if is_enabled:
         logging.info("Starting uploader service with dynamic folders...")
         for thread in upload_threads:
             if thread.is_alive():
                 thread.join()  # Ensure old threads are finished
         upload_threads = [threading.Thread(target=watch_folder_in_thread, args=(folder, shutdown_event)) for folder in upload_folders]
+        shutdown_event.clear()
         for thread in upload_threads:
             thread.start()
 
