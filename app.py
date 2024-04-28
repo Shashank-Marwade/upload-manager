@@ -1,3 +1,4 @@
+import logging.config
 from flask import Flask, request, jsonify, send_file
 import threading
 import os
@@ -5,8 +6,11 @@ import signal
 import logging
 import boto3
 from data_purge_manager import DataPurger
+from loggerConf import setlogger
 from uploader import graceful_shutdown, watch_folder_in_thread
 import configparser
+from models.connection import engine
+from sqlalchemy.ext.declarative import declarative_base
 
 app = Flask(__name__)
 upload_folders = []
@@ -150,7 +154,7 @@ def restart_monitoring():
             thread.start()
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    setlogger()
     signal.signal(signal.SIGINT, graceful_shutdown)
     logging.info(f"UPLOAD_ENABLED: {bool(os.environ.get('UPLOAD_ENABLED', False))}")
 
@@ -162,5 +166,9 @@ if __name__ == "__main__":
                         region_name=credentials['region_name'])
     else:
         logging.error("Failed to read credentials. Exiting.")
+
+    # Create all tables in the engine.
+    Base = declarative_base()
+    Base.metadata.create_all(engine)
 
     app.run(host='0.0.0.0', debug=True, port=5000)

@@ -22,6 +22,7 @@ services:
       PURGE_RESUME_PERCENTAGE: 80 #percent
       BUCKET_NAME: fti-test-txt-bucket #my-upload-mgr-bucket
       ARCHIVE_EXPIRE_DAYS: 30 # ARCHIVE PURGE AFTER DAYS
+      DATABASE: uploader.db
     volumes:
       - ~/workstuff:/data
     logging:
