@@ -124,6 +124,47 @@ def download_s3_object():
     except Exception as e:
         return f'Error downloading file: {e}', 500
 
+@app.route('/set_cred', methods=['POST'])
+def set_cred():
+    data = request.get_json()
+    aws_access_key_id = data.get('aws_access_key_id')
+    aws_secret_access_key = data.get('aws_secret_access_key')
+    region_name = data.get('region_name')
+
+    if not aws_access_key_id or not aws_secret_access_key or not region_name:
+        return jsonify({"error": "Missing required parameters"}), 400
+
+    config = configparser.ConfigParser()
+    config.read('/root/.aws/credentials')
+
+    if not config.has_section('default'):
+        config.add_section('default')
+
+    config.set('default', 'aws_access_key_id', aws_access_key_id)
+    config.set('default', 'aws_secret_access_key', aws_secret_access_key)
+    config.set('default', 'region_name', region_name)
+
+    with open('/root/.aws/credentials', 'w') as configfile:
+        config.write(configfile)
+        configfile.close()
+    
+    return jsonify({"message": "Credentials saved successfully"}), 200
+
+@app.route('/get_cred', methods=['GET'])
+def get_cred():
+    config = configparser.ConfigParser()
+    config.read('/root/.aws/credentials')
+
+    if config.has_section('default'):
+        credentials = {
+            'aws_access_key_id': config['default'].get('aws_access_key_id'),
+            'aws_secret_access_key': config['default'].get('aws_secret_access_key'),
+            'region_name': config['default'].get('region_name'),
+        }
+        return jsonify(credentials)
+    else:
+        return jsonify({"error": "No credentials found"}), 404
+
 def restart_monitoring():
     global data_purger, memory_thread, purge_thread, upload_threads, shutdown_event
     shutdown_event.set()  # Signal existing threads to stop
