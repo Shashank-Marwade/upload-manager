@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging.config
 from flask import Flask, request, jsonify, send_file
 import threading
@@ -7,10 +8,12 @@ import logging
 import boto3
 from data_purge_manager import DataPurger
 from loggerConf import setlogger
+from models.models import UploadMon
 from uploader import graceful_shutdown, watch_folder_in_thread
 import configparser
 from models.connection import engine
 from sqlalchemy.ext.declarative import declarative_base
+from models.connection import session
 
 app = Flask(__name__)
 upload_folders = []
@@ -47,11 +50,20 @@ def update_folders():
     upload_folders = data.get('upload_folders', [])
     purge_folders = data.get('purge_folders', [])
 
+    rows = session.query(UploadMon).all()
+    for row in rows:
+        row.path = upload_folders if row.type == 'upload' else purge_folders
+        row.update_date_time = datetime.now()
     logging.info(f"Updated folders: upload={upload_folders}, purge={purge_folders}")
+
     # Restart all monitoring based on new folders
     restart_monitoring()
     return jsonify({"message": "Folders updated successfully"}), 200
 
+@app.route('/get_folders', methods=['GET'])
+def get_folders():
+    global upload_folders, purge_folders
+    return jsonify({"upload_folders": upload_folders, "purge_folders": purge_folders})
 
 def read_aws_credentials(config_file_path="/root/.aws/credentials"):
 
