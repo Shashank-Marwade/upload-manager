@@ -31,14 +31,55 @@ Ensure you have Docker and Python installed on your Linux system. The project is
 
 ### Installation
 
-1. **Clone the repository:**
+#### 1. Clone the repository:
+
    ```bash
    git clone https://github.com/yourgithubusername/upload-manager.git
    cd upload-manager
+   ```
+
+#### 2. Configure Environment Variables
+Before building the Docker images, you may need to adjust the environment variables used by the application. These variables are set in the docker-compose.yml file. Edit this file to change any values as required:
+
+
+#### 3. Build the Docker Containers
+Run the following command to build the Docker containers. This will fetch the base images, install dependencies, and prepare your application's Docker environment:
+
+   ```bash
+   docker-compose build
+   ```
+
+#### 4. Start the Application
+Start the application in detached mode using Docker Compose:
+
+   ```bash
+   docker-compose up -d
+   ```
+This command will start the containers in the background. To view logs, use docker-compose logs -f.
+
+#### 5: Access the Application
+Once the containers are running, open your web browser and navigate to:
+
+   ```bash
+   http://127.0.0.1:5000/
+   ```
+This URL will direct you to the home page of the Employee Management System where you can interact with the application.
+
+#### Stopping the Application
+To stop the running containers:
+
+
+   ```bash
+   docker-compose down
+   ```
+
+
 ## License
+
 - Distributed under the MIT License. See LICENSE for more information.
 
 ## Contact
-- Your Name – @YourTwitter - shashankmarwade99@gmail.com
+
+- Shahsank Marwade– shashankmarwade99@gmail.com
 
 - Project Link: https://github.com/Shashank-Marwade/upload-manager
